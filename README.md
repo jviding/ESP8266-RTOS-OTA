@@ -7,14 +7,14 @@ Remote OTA firmware updates with FreeRTOS on ESP8266.
 1) Toolchain: xtensa-lx106-elf
 2) ESP8266 libs: ESP8266_RTOS_SDK
 
-For more details:
+For more details: <br>
 https://docs.espressif.com/projects/esp8266-rtos-sdk/en/latest/get-started/index.html
 
 Set ENV for make:
 >$ export PATH="$PATH:$HOME/esp/xtensa-lx106-elf/bin"  <br>
 >$ export IDF_PATH="$HOME/esp/ESP8266_RTOS_SDK"
 
-APIs, libs, build conf:
+APIs, libs, build conf: <br>
 https://github.com/espressif/ESP8266_RTOS_SDK/blob/master/docs/en/api-guides/build-system.rst
 
 ## Project configuration
@@ -36,7 +36,7 @@ With esptool:
 >   0x10000 esp8266-rtos-ota.bin \\  <br>
 >   0x8000 partitions.bin
 
-Or /dev/ttyS0 with serial (TX,RX)
+Remember /dev/ttyS0 with serial (TX,RX)
 
 ## Debug
 
