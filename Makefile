@@ -1,10 +1,6 @@
 PROJECT_NAME := esp8266-rtos-ota
 
-# Set directory path
-# Searched for *.c, *.cpp, *.S
-COMPONENT_SRCDIRS := main
-
-# Include ESP-IDF build settings
+# Include ESP-IDF core Makefile
 include $(IDF_PATH)/make/project.mk
 
 
