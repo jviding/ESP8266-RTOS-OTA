@@ -2,6 +2,10 @@
 
 static const char* TAG = "Leds";
 
+static const gpio_num_t LED_1 = GPIO_NUM_12;
+static const gpio_num_t LED_2 = GPIO_NUM_14;
+static const gpio_num_t LED_3 = GPIO_NUM_16;
+
 
 esp_err_t Leds::init() {
   gpio_config_t io_conf = {};

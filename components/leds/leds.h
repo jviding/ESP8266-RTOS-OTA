@@ -7,10 +7,6 @@
 #include "esp_check.h"
 #include "driver/gpio.h"
 
-#define LED_1 GPIO_NUM_12
-#define LED_2 GPIO_NUM_14
-#define LED_3 GPIO_NUM_16
-
 
 class Leds {
   public:
