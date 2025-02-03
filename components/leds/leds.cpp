@@ -1,5 +1,10 @@
 #include "leds.h"
 
+#include "freertos/task.h"
+#include "esp_log.h"
+#include "esp_check.h"
+
+
 static const char* TAG = "Leds";
 
 static const gpio_num_t LED_1 = GPIO_NUM_12;
