@@ -1,5 +1,10 @@
 #include "storage.h"
 
+#include "esp_log.h"
+#include "esp_check.h"
+#include "nvs_flash.h"
+
+
 static const char* TAG = "Storage";
 
 static const char* NVS_NAME = "storage";
