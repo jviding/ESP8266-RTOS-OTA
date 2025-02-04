@@ -1,0 +1,15 @@
+menu "Project Configuration"
+
+config HOTSPOT_AP_WIFI_SSID
+  string "HotSpot AP WiFi SSID"
+  default "My-WiFi-SSID"
+  help
+    WiFi SSID (network name) for the HotSpot AP
+
+config HOTSPOT_AP_WIFI_PWD
+  string "HotSpot AP WiFi Password"
+  default "My-WiFi-Password"
+  help
+    WiFi Password for the HotSpot AP
+
+endmenu
