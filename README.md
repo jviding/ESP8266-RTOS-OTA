@@ -13,8 +13,7 @@ Set ENV for make:
 >$ export PATH="$PATH:$HOME/esp/xtensa-lx106-elf/bin"  <br>
 >$ export IDF_PATH="$HOME/esp/ESP8266_RTOS_SDK"
 
-APIs, libs, build conf: <br>
-https://github.com/espressif/ESP8266_RTOS_SDK/blob/master/docs/en/api-guides/build-system.rst
+APIs, libs, build conf: [Link](https://github.com/espressif/ESP8266_RTOS_SDK/blob/master/docs/en/api-guides/build-system.rst)
 
 ## Project configuration
 
