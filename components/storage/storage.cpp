@@ -66,12 +66,11 @@ esp_err_t Storage::read_value(const char* key, char** value) {
   ESP_CLEANUP_ON_ERROR(nvs_get_str(my_handle, key, NULL, &val_length), TAG, 
     "Error reading %s length.", key);
 
-    temp_val = new char[val_length];
+  temp_val = new char[val_length];
   
   ESP_CLEANUP_ON_ERROR(nvs_get_str(my_handle, key, temp_val, &val_length), TAG, 
     "Error reading %s value.", key);
   
-  // Pointer to value
   delete[] *value;
   *value = temp_val;
   temp_val = nullptr;
