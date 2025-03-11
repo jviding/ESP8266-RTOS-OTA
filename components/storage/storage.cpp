@@ -58,30 +58,26 @@ esp_err_t Storage::read_value(const char* key, char** value) {
 
   esp_err_t esp_err = ESP_OK;
   nvs_handle my_handle;
-  char* tmp = nullptr;
-  size_t len;
+  char* temp_val = nullptr;
+  size_t val_length;
 
   ESP_CLEANUP_ON_ERROR(nvs_open(NVS_NAME, NVS_READONLY, &my_handle), TAG, 
     "Error opening NVS RO handle.");
-
-  // Read value length
-  ESP_CLEANUP_ON_ERROR(nvs_get_str(my_handle, key, NULL, &len), TAG, 
+  ESP_CLEANUP_ON_ERROR(nvs_get_str(my_handle, key, NULL, &val_length), TAG, 
     "Error reading %s length.", key);
 
-  // Allocate
-  tmp = new char[len];
+    temp_val = new char[val_length];
   
-  // Read value 
-  ESP_CLEANUP_ON_ERROR(nvs_get_str(my_handle, key, tmp, &len), TAG, 
+  ESP_CLEANUP_ON_ERROR(nvs_get_str(my_handle, key, temp_val, &val_length), TAG, 
     "Error reading %s value.", key);
   
   // Pointer to value
   delete[] *value;
-  *value = tmp;
-  tmp = nullptr;
+  *value = temp_val;
+  temp_val = nullptr;
 
 cleanup:
   nvs_close(my_handle);
-  delete[] tmp;
+  delete[] temp_val;
   return esp_err;
 };
