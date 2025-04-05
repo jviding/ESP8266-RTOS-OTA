@@ -7,11 +7,7 @@
 #include "nvs_flash.h"
 #include "esp_event.h"
 #include <stdio.h>
-//#include "sdkconfig.h"
-//#include <string.h>
-//#include <iostream>
 #include <cstring>
-//#include <cstdlib>
 
 //#define WIFI_SSID   CONFIG_HOTSPOT_AP_WIFI_SSID
 
@@ -150,10 +146,15 @@ esp_err_t HotSpot::start(bool use_password) {
     set_8_digit_random_password();
   }
 
+  esp_err_t err = esp_event_loop_create_default();
+  if (err == ESP_ERR_INVALID_STATE) {
+    ESP_LOGW(TAG, "Event loop already exists.");
+  } else if (err != ESP_OK) {
+    ESP_RETURN_ON_ERROR(err, TAG, "Failed creating event loop.");
+  }
+
   ESP_RETURN_ON_ERROR(start_networking(), TAG, 
     "Failed starting network stack.");
-  ESP_RETURN_ON_ERROR(esp_event_loop_create_default(), TAG,
-    "Failed creating event loop.");
   ESP_RETURN_ON_ERROR(init_wifi_ap_mode(use_password), TAG,
     "Failed initializing WiFi AP mode.");
   ESP_RETURN_ON_ERROR(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL), TAG,
@@ -174,8 +175,6 @@ esp_err_t HotSpot::stop() {
     "Failed stopping WiFi AP.");
   ESP_RETURN_ON_ERROR(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler), TAG,
     "Failed unregistering WiFi event handler.");
-  ESP_RETURN_ON_ERROR(esp_event_loop_delete_default(), TAG, 
-    "Failed deleting event loop.");
   ESP_RETURN_ON_ERROR(tcpip_adapter_dhcps_stop(TCPIP_ADAPTER_IF_AP), TAG,
     "Failed stopping DHCP server.");
   ESP_RETURN_ON_ERROR(esp_wifi_deinit(), TAG,
