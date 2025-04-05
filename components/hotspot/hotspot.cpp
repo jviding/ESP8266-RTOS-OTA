@@ -100,8 +100,7 @@ esp_err_t HotSpot::start_networking() {
   // Enable TCP/IP stack
   tcpip_adapter_init();
   // Stop DHCP server if running
-  ESP_RETURN_ON_ERROR(tcpip_adapter_dhcps_stop(TCPIP_ADAPTER_IF_AP), TAG, 
-    "Failed stopping DHCP server.");
+  tcpip_adapter_dhcps_stop(TCPIP_ADAPTER_IF_AP);
   // Configure iface
   tcpip_adapter_ip_info_t ip_info;
   IP4_ADDR(&ip_info.ip, 10, 0, 0, 1);
@@ -175,6 +174,8 @@ esp_err_t HotSpot::stop() {
     "Failed stopping WiFi AP.");
   ESP_RETURN_ON_ERROR(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler), TAG,
     "Failed unregistering WiFi event handler.");
+  ESP_RETURN_ON_ERROR(esp_event_loop_delete_default(), TAG, 
+    "Failed deleting event loop.");
   ESP_RETURN_ON_ERROR(tcpip_adapter_dhcps_stop(TCPIP_ADAPTER_IF_AP), TAG,
     "Failed stopping DHCP server.");
   ESP_RETURN_ON_ERROR(esp_wifi_deinit(), TAG,
