@@ -33,11 +33,11 @@ const char* HotSpot::get_ip_address() {
 
 esp_err_t HotSpot::set_ssid(const char* new_ssid) {
   ESP_RETURN_ON_ERROR((new_ssid == nullptr) ? ESP_ERR_INVALID_ARG : ESP_OK, TAG,
-    "SSID was nullptr.");
+    "Failed setting SSID, was nullptr.");
   ESP_RETURN_ON_ERROR((strlen(new_ssid) == 0) ? ESP_ERR_INVALID_ARG : ESP_OK, TAG,
-    "SSID was empty.");
+    "Failed setting SSID, was empty.");
   ESP_RETURN_ON_ERROR((strlen(new_ssid) > 31) ? ESP_ERR_INVALID_ARG : ESP_OK, TAG,
-    "SSID exceeds 31 chars.");
+    "Failed setting SSID, exceeded 31 chars.");
 
   delete[] ssid;
   size_t len = strlen(new_ssid) + 1; // +1 for null terminator
@@ -48,11 +48,11 @@ esp_err_t HotSpot::set_ssid(const char* new_ssid) {
 
 esp_err_t HotSpot::set_password(const char* new_password) {
   ESP_RETURN_ON_ERROR((new_password == nullptr) ? ESP_ERR_INVALID_ARG : ESP_OK, TAG,
-    "Password was nullptr");
+    "Failed setting password, was nullptr");
   ESP_RETURN_ON_ERROR((strlen(new_password) <= 8) ? ESP_ERR_INVALID_ARG : ESP_OK, TAG,
-    "Password was less than 8 chars.");
+    "Failed setting password, was less than 8 chars.");
   ESP_RETURN_ON_ERROR((strlen(new_password) > 63) ? ESP_ERR_INVALID_ARG : ESP_OK, TAG,
-    "Password exceeds 63 chars.");
+    "Failed setting password, exceeded 63 chars.");
 
   delete[] password;
   size_t len = strlen(new_password) + 1; // +1 for null terminator
@@ -92,11 +92,30 @@ void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id
   }
 };
 
+esp_err_t HotSpot::register_event_handlers() {
+  ESP_RETURN_ON_ERROR(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_AP_STACONNECTED, &wifi_event_handler, NULL), TAG,
+    "Failed registering event WIFI_EVENT_AP_STACONNECTED in handler.");
+  ESP_RETURN_ON_ERROR(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_AP_STADISCONNECTED, &wifi_event_handler, NULL), TAG,
+    "Failed registering event WIFI_EVENT_AP_STADISCONNECTED in handler.");
+  return ESP_OK;
+};
+
+esp_err_t HotSpot::unregister_event_handlers() {
+  ESP_RETURN_ON_ERROR(esp_event_handler_unregister(WIFI_EVENT, WIFI_EVENT_AP_STACONNECTED, &wifi_event_handler), TAG,
+    "Failed unregistering event WIFI_EVENT_AP_STACONNECTED from handler.");
+  ESP_RETURN_ON_ERROR(esp_event_handler_unregister(WIFI_EVENT, WIFI_EVENT_AP_STADISCONNECTED, &wifi_event_handler), TAG,
+    "Failed unregistering event WIFI_EVENT_AP_STADISCONNECTED from handler.");
+  return ESP_OK;
+};
+
 esp_err_t HotSpot::start_networking() {
   // Enable TCP/IP stack
   tcpip_adapter_init();
   // Stop DHCP server if running
-  tcpip_adapter_dhcps_stop(TCPIP_ADAPTER_IF_AP);
+  esp_err_t err = tcpip_adapter_dhcps_stop(TCPIP_ADAPTER_IF_AP);
+  if (err != ESP_OK && err != ESP_ERR_TCPIP_ADAPTER_DHCP_ALREADY_STOPPED) {
+    ESP_LOGE(TAG, "Failed stopping DHCP server.");
+  }
   // Configure iface
   tcpip_adapter_ip_info_t ip_info;
   IP4_ADDR(&ip_info.ip, 10, 0, 0, 1);
@@ -118,11 +137,11 @@ esp_err_t HotSpot::init_wifi_ap_mode(bool use_password) {
   // Set mode
   ESP_RETURN_ON_ERROR(esp_wifi_set_mode(WIFI_MODE_AP), TAG,
     "Failed setting WiFi mode to AP.");
-  // Configure
+  // Create config
   wifi_config_t wifi_conf;
   strcpy(reinterpret_cast<char*>(wifi_conf.ap.ssid), ssid);
   wifi_conf.ap.ssid_len = strlen(ssid);
-
+  // Set auth mode
   if (use_password) {
     ESP_LOGI(TAG, "Authmode: Use password.");
     wifi_conf.ap.authmode = WIFI_AUTH_WPA2_PSK;
@@ -131,34 +150,41 @@ esp_err_t HotSpot::init_wifi_ap_mode(bool use_password) {
     ESP_LOGI(TAG, "Authmode: No password.");
     wifi_conf.ap.authmode = WIFI_AUTH_OPEN;
   }
-
+  // Set config
   ESP_RETURN_ON_ERROR(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_conf), TAG,
     "Failed setting WiFi AP configuration.");
   return ESP_OK;
 };
 
 esp_err_t HotSpot::start(bool use_password) {
-  
-  ESP_RETURN_ON_ERROR((ssid == nullptr) ? ESP_ERR_INVALID_ARG : ESP_OK, TAG, "SSID not set.");
-
+  ESP_RETURN_ON_ERROR((ssid == nullptr) ? ESP_ERR_INVALID_ARG : ESP_OK, TAG, 
+    "Failed starting, SSID not set.");
+  // Set random password, if needed
   if (use_password == true && password == nullptr) {
     ESP_LOGI(TAG, "Generating random password.");
     set_8_digit_random_password();
   }
-
+  // Create default event loop
   esp_err_t err = esp_event_loop_create_default();
   if (err == ESP_ERR_INVALID_STATE) {
-    ESP_LOGW(TAG, "Event loop already exists.");
+    ESP_LOGW(TAG, "Default event loop already exists.");
   } else if (err != ESP_OK) {
-    ESP_RETURN_ON_ERROR(err, TAG, "Failed creating event loop.");
+    ESP_RETURN_ON_ERROR(err, TAG, "Failed creating default event loop.");
   }
+
+
+  nvs_flash_init(); // TODO: deinit
+
 
   ESP_RETURN_ON_ERROR(start_networking(), TAG, 
     "Failed starting network stack.");
   ESP_RETURN_ON_ERROR(init_wifi_ap_mode(use_password), TAG,
     "Failed initializing WiFi AP mode.");
-  ESP_RETURN_ON_ERROR(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL), TAG,
-    "Failed registering event handler.");
+    
+  //ESP_RETURN_ON_ERROR(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL), TAG,
+  //  "Failed registering event handler.");
+  register_event_handlers();
+  
   ESP_RETURN_ON_ERROR(esp_wifi_start(), TAG,
     "Failed starting WiFi AP.");
 
@@ -173,8 +199,10 @@ esp_err_t HotSpot::start(bool use_password) {
 esp_err_t HotSpot::stop() {
   ESP_RETURN_ON_ERROR(esp_wifi_stop(), TAG,
     "Failed stopping WiFi AP.");
-  ESP_RETURN_ON_ERROR(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler), TAG,
-    "Failed unregistering WiFi event handler.");
+  //ESP_RETURN_ON_ERROR(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler), TAG,
+  //  "Failed unregistering WiFi event handler.");
+  unregister_event_handlers();
+  
   ESP_RETURN_ON_ERROR(tcpip_adapter_dhcps_stop(TCPIP_ADAPTER_IF_AP), TAG,
     "Failed stopping DHCP server.");
   ESP_RETURN_ON_ERROR(esp_wifi_deinit(), TAG,

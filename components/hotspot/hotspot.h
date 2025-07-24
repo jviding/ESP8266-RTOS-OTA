@@ -28,6 +28,8 @@ class HotSpot {
     static void set_8_digit_random_password();
 
     // Functions
+    static esp_err_t register_event_handlers();
+    static esp_err_t unregister_event_handlers();
     static esp_err_t start_networking();
     static esp_err_t init_wifi_ap_mode(bool use_password);
 };
